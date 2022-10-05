@@ -1,7 +1,7 @@
 <h1>Validador de CNPJ</h1>
 <h3>Validador numérico de CNPJ com REGEX em APEX.</h3>
 
-```apex
+```C#
 public with sharing class AccountHelper {
     public AccountHelper() {}
 
