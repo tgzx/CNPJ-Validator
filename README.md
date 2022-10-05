@@ -1,48 +1,89 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-# Salesforce DX Project: Next Steps
+<h1>Validador de CNPJ</h1>
+<h3>Validador numérico de CNPJ com REGEX em APEX.</h3>
 
-Now that you’ve created a Salesforce DX project, what’s next? Here are some documentation resources to get you started.
+```C#
+public with sharing class AccountHelper {
+    public AccountHelper() {}
 
-## How Do You Plan to Deploy Your Changes?
+    public static void CPNJValidate(List<Account> accountList){
+        List<Account> accountCNPJList = new List<Account>();
 
-Do you want to deploy a set of changes, or create a self-contained application? Choose a [development model](https://developer.salesforce.com/tools/vscode/en/user-guide/development-models).
+        for(Account accountCNPJunit : accountList){
 
-## Configure Your Salesforce DX Project
+            String regexCNPJ;
+            String numbersOnlyCNPJ = '';
 
-The `sfdx-project.json` file contains useful configuration information for your project. See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm) in the _Salesforce DX Developer Guide_ for details about this file.
+            Pattern pattern = Pattern.compile('(\\d{2})[.](\\d{3})[.](\\d{3})[/](\\d{4})[-](\\d{2})');
+            Matcher matcher = pattern.matcher(accountCNPJunit.CNPJ__c);
+            if(matcher.find()){
+                regexCNPJ = matcher.replaceAll('$1.$2.$3/$4-$5');
+            }
 
-## Read All About It
+            String[] CNPJChar = accountCNPJunit.CNPJ__c.split('');
+    
+            for (Integer i = 0; i < CNPJChar.size(); i++) {
+                if('1234567890'.contains('' + CNPJChar[i])){
+                    numbersOnlyCNPJ = numbersOnlyCNPJ + CNPJChar[i];
+                }
+            }
 
-- [Salesforce Extensions Documentation](https://developer.salesforce.com/tools/vscode/)
-- [Salesforce CLI Setup Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
-- [Salesforce DX Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_intro.htm)
-- [Salesforce CLI Command Reference](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference.htm)
-=======
-# CNPJ-Validator
-Validador numérico de CNPJ com REGEX em APEX.
->>>>>>> a305769 (Initial commit)
-=======
-# CNPJ-Validator
-Validador numérico de CNPJ com REGEX em APEX.
-=======
-# Salesforce DX Project: Next Steps
+            if (!CPNJValEngine(numbersOnlyCNPJ) || accountCNPJunit.CNPJ__c != regexCNPJ){
+                accountCNPJunit.addError(Label.CNPJValidate);
+            }            
+        }
+    }
 
-Now that you’ve created a Salesforce DX project, what’s next? Here are some documentation resources to get you started.
+    public static Boolean CPNJValEngine(String CNPJ){
 
-## How Do You Plan to Deploy Your Changes?
+        Boolean testeBoolean = true;
+        
+        if (CNPJ == '00000000000000' || CNPJ == '11111111111111' || 
+            CNPJ == '22222222222222' || CNPJ == '33333333333333' || 
+            CNPJ == '44444444444444' || CNPJ == '55555555555555' || 
+            CNPJ == '66666666666666' || CNPJ == '77777777777777' || 
+            CNPJ == '88888888888888' || CNPJ == '99999999999999')
+            {return false;}
 
-Do you want to deploy a set of changes, or create a self-contained application? Choose a [development model](https://developer.salesforce.com/tools/vscode/en/user-guide/development-models).
+        Integer sm, i, r, num, peso, dig13, dig14;
+        List <String> cnpjString = CNPJ.split('');
+        sm = 0;
+        peso = 2;
+        for (i = 11; i >= 0; i--) {
+          num = Integer.valueOf(cnpjString[i]);
+          sm = sm + (num * peso);
+          peso = peso + 1;
+          if (peso == 10)
+            peso = 2;
+        }
+    
+        r = math.mod(sm, 11);
+        if ((r == 0) || (r == 1))
+          dig13 = 0;
+        else dig13 = Integer.valueOf(11 - r);
+    
+        // Calculo do 2o. Digito Verificador
+        sm = 0;
+        peso = 2;
+        for (i = 12; i >= 0; i--) {
+          num = Integer.valueOf(cnpjString[i]);
+          sm = sm + (num * peso);
+          peso = peso + 1;
+          if (peso == 10)
+            peso = 2;
+        }
+    
+        r = math.mod(sm, 11);
+        if ((r == 0) || (r == 1))
+          dig14 = 0;
+        else dig14 = Integer.valueOf(11 - r);
+    
+        // Verifica se os dígitos calculados conferem com os dígitos informados.
+        if (dig13 == Integer.valueOf(cnpjString[12]) && dig14 == Integer.valueOf(cnpjString[13]))
+        testeBoolean = true;
+        else testeBoolean = false;
 
-## Configure Your Salesforce DX Project
-
-The `sfdx-project.json` file contains useful configuration information for your project. See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm) in the _Salesforce DX Developer Guide_ for details about this file.
-
-## Read All About It
-
-- [Salesforce Extensions Documentation](https://developer.salesforce.com/tools/vscode/)
-- [Salesforce CLI Setup Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
-- [Salesforce DX Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_intro.htm)
-- [Salesforce CLI Command Reference](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference.htm)
->>>>>>> 9499c95 (initial commit)
->>>>>>> bde9a42 (initial commit)
+        return testeBoolean;
+    }
+    
+}
+```
