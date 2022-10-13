@@ -19,17 +19,32 @@ public with sharing class OrderItemHelper {
         Map<Id, Margin__c> marginMapList = new Map<Id, Margin__c>([
             SELECT Id, ProductHierarchy__c, Product__c, AccountGroup__c, Account__c, DistributionCenter__c, City__c, State__c, Country__c, Status__c, Value__c
             FROM Margin__c
+            WHERE Status__c = 'Aprovado'
         ]);
 
         List<OrderItem> orderItemFullList = new List<OrderItem>([
-            SELECT Id, OrderId, Product2Id, Product2.ProductHierarchy__c, Order.AccountId, Order.Account.AccountGroup__c, Order.AccountAddress__c, Order.AccountAddress__r.City__c, Order.AccountAddress__r.City__r.State__c, Order.AccountAddress__r.City__r.State__r.Country__c, MarginPercentage__c, TaxPercentage__c
+            SELECT Id, OrderId, Product2Id, Product2.ProductHierarchy__c, Order.AccountId, Order.Account.Name, Order.Account.AccountGroup__c, Order.AccountAddress__c, Order.AccountAddress__r.City__c, Order.AccountAddress__r.City__r.State__c, Order.AccountAddress__r.City__r.State__r.Country__c, MarginPercentage__c, TaxPercentage__c, OrderItemNote__c
             FROM OrderItem 
             WHERE Id IN: orderItemSetId
         ]);
 
+        List<OrderItem> orderItemMarginFindedList = findMargin(orderItemFullList, marginMapList);
+
+        // for(OrderItem iOrderItem : orderItemMarginFindedList){
+        //     if(iOrderItem.MarginPercentage__c == 0){
+        //         System.debug('ENTROU NO LABEL ERROR');
+        //         iOrderItem.addError(Label.DuplicateCNPJError);
+        //     }
+        // }
+
+        return orderItemMarginFindedList;
+    }
+
+    public static List<OrderItem> findMargin(List<OrderItem> orderItemList, Map<Id, Margin__c> marginMapList){
+
         List<OrderItem> orderItemBuildedList = new List<OrderItem>();
 
-        for(OrderItem iOrderItem : orderItemFullList){
+        for(OrderItem iOrderItem : orderItemList){
 
             Decimal marginValue = 0;
             Integer score = 0;
@@ -60,36 +75,28 @@ public with sharing class OrderItemHelper {
                     } else if(iMargin.Country__c == iOrderItem.Order.AccountAddress__r.City__r.State__r.Country__c){
                         score = score + 100;
                     }
-                    
                 
                     if(score >= 100 && score < 400){
                         marginValue = iMargin.Value__c;
                         System.debug('marginValue marginCountry ==> ' + marginValue);
-                        // marginCountry.add(iMargin);
                     } else if(score >= 200 && score < 300){
                         marginValue = iMargin.Value__c;
                         System.debug('marginValue marginState ==> ' + marginValue);
-                        // marginState.add(iMargin);
                     } else if(score >= 300 && score < 400){
                         marginValue = iMargin.Value__c;
                         System.debug('marginValue marginCity ==> ' + marginValue);
-                        // marginCity.add(iMargin);
                     } else if(score >= 400 && score < 500){
                         marginValue = iMargin.Value__c;
                         System.debug('marginValue marginAccountGroup ==> ' + marginValue);
-                        // marginAccountGroup.add(iMargin);
                     } else if(score >= 500 && score < 800){
                         marginValue = iMargin.Value__c;
                         System.debug('marginValue marginAccount ==> ' + marginValue);
-                        // marginAccount.add(iMargin);
                     } else if(score >= 800 && score < 1000){
                         marginValue = iMargin.Value__c;
                         System.debug('marginValue marginProductHierarchy ==> ' + marginValue);
-                        // marginProductHierarchy.add(iMargin);
                     } else if(score >= 1000){
                         marginValue = iMargin.Value__c;
                         System.debug('marginValue marginProduct ==> ' + marginValue);
-                        // marginProduct.add(iMargin);
                     }
                     System.debug('score =>> ' + score);
                     scoreNew = score;
@@ -97,8 +104,8 @@ public with sharing class OrderItemHelper {
                 }
             }
 
+            iOrderItem.OrderItemNote__c = iOrderItem.Order.Account.Name;
             iOrderItem.MarginPercentage__c = marginValue;
-            
             orderItemBuildedList.add(iOrderItem);
         }
 
