@@ -6,9 +6,9 @@
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
-trigger OrderItemTrigger on OrderItem (before insert, before update, after insert) {
+trigger MarginTrigger on Margin__c (before insert, before update, after delete) {
 
-    OrderItemTriggerHandler handler = new OrderItemTriggerHandler(
+    MarginTriggerHandler handler = new MarginTriggerHandler(
         Trigger.old, Trigger.new, Trigger.oldMap, Trigger.newMap
     );
 
@@ -17,9 +17,9 @@ trigger OrderItemTrigger on OrderItem (before insert, before update, after inser
             handler.beforeInsert();
         }
 
-        // when AFTER_INSERT{
-        //     handler.afterInsert();
-        // }
+        when AFTER_DELETE{
+            handler.afterDelete();
+        }
 
         when BEFORE_UPDATE{
             handler.beforeUpdate();

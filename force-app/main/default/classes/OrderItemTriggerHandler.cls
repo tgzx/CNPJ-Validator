@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-12-2022
+ * @last modified on  : 10-13-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
@@ -19,12 +19,11 @@ public with sharing class OrderItemTriggerHandler {
         this.newMap = newMap;
     }
 
-    public void afterInsert(){
-        List<OrderItem> orderItemList = OrderItemHelper.ruleMargin(this.newRecords);
-
-        update orderItemList;
+    public void beforeInsert(){
+        OrderItemHelper.ruleMargin(this.newRecords);
     }
 
     public void beforeUpdate(){
+        OrderItemHelper.ruleMargin(this.newRecords);
     }
 }
