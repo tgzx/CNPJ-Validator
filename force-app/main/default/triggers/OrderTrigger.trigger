@@ -2,13 +2,13 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-16-2022
+ * @last modified on  : 10-15-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
-trigger OrderItemTrigger on OrderItem (before insert, before update, after insert, after delete) {
+trigger OrderTrigger on Order (before insert, before update, after insert) {
 
-    OrderItemTriggerHandler handler = new OrderItemTriggerHandler(
+    OrderTriggerHandler handler = new OrderTriggerHandler(
         Trigger.old, Trigger.new, Trigger.oldMap, Trigger.newMap
     );
 
@@ -17,9 +17,9 @@ trigger OrderItemTrigger on OrderItem (before insert, before update, after inser
             handler.beforeInsert();
         }
 
-        when AFTER_DELETE{
-            handler.afterDelete();
-        }
+        // when AFTER_INSERT{
+        //     handler.afterInsert();
+        // }
 
         when BEFORE_UPDATE{
             handler.beforeUpdate();

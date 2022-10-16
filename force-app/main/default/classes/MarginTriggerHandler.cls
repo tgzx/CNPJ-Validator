@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-13-2022
+ * @last modified on  : 10-14-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
@@ -23,6 +23,7 @@ public with sharing class MarginTriggerHandler {
         MarginHelper.checkMarginDuplicated(this.newRecords);
     }
 
+    // FUNCIONA MELHOR SE TIVER UM CAMPO STATUS EM PEDIDO, PARA RECALCULAR A PRECIFICAÇÃO APENAS DOS PEDIDOS EM ABERTO
     public void afterDelete(){
         List<OrderItem> orderItemList = MarginHelper.refindMargins(this.oldRecords);
 
@@ -30,6 +31,7 @@ public with sharing class MarginTriggerHandler {
     }
 
     public void beforeUpdate(){
+        // MarginHelper.checkMarginDuplicatedUpdated(this.newRecords);
         MarginHelper.checkMarginDuplicated(this.newRecords);
     }
 }

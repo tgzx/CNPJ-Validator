@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-13-2022
+ * @last modified on  : 10-16-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
@@ -20,10 +20,25 @@ public with sharing class OrderItemTriggerHandler {
     }
 
     public void beforeInsert(){
-        OrderItemHelper.ruleMargin(this.newRecords);
+        List<Order> orderListBuilded = OrderItemHelper.checkInsertionOrderItem(this.newRecords);
+        update orderListBuilded;
+
+        
+        //OrderItemHelper.ruleMargin(this.newRecords);
+        //OrderItemHelper.ruleFreight(this.newRecords);
+        //OrderItemHelper.ruleTax(this.newRecords);
     }
 
     public void beforeUpdate(){
-        OrderItemHelper.ruleMargin(this.newRecords);
+        List<Order> orderListBuilded = OrderItemHelper.checkInsertionOrderItem(this.newRecords);
+        update orderListBuilded;
+        //OrderItemHelper.ruleMargin(this.newRecords);
+        //OrderItemHelper.ruleFreight(this.newRecords);
+        //OrderItemHelper.ruleTax(this.newRecords);
+    }
+
+    public void afterDelete(){
+        // List<Order> ordeListBuilded = OrderItemHelper.calcPrice(this.newRecords);
+        // update ordeListBuilded;
     }
 }

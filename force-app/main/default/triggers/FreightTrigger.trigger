@@ -2,13 +2,13 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-16-2022
+ * @last modified on  : 10-14-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
-trigger OrderItemTrigger on OrderItem (before insert, before update, after insert, after delete) {
+trigger FreightTrigger on Freight__c (before insert, before update, after delete) {
 
-    OrderItemTriggerHandler handler = new OrderItemTriggerHandler(
+    FreightTriggerHandler handler = new FreightTriggerHandler(
         Trigger.old, Trigger.new, Trigger.oldMap, Trigger.newMap
     );
 
