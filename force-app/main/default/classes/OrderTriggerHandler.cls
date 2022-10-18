@@ -7,10 +7,10 @@
 **/
 
 public with sharing class OrderTriggerHandler {
-    List<Order> oldRecords {get; set;} // trigger.old
-    List<Order> newRecords {get; set;} // trigger.new
-    Map<Id, Order> oldMap {get; set;} // trigger.oldMap
-    Map<Id, Order> newMap {get; set;} // trigger.newMap
+    List<Order> oldRecords {get; set;}
+    List<Order> newRecords {get; set;}
+    Map<Id, Order> oldMap {get; set;}
+    Map<Id, Order> newMap {get; set;}
 
     public OrderTriggerHandler(List<Order> oldRecords, List<Order> newRecords, Map<Id, Order> oldMap, Map<Id, Order> newMap) {
         this.oldRecords = oldRecords;

@@ -7,10 +7,10 @@
 **/
 
 public with sharing class OrderItemTriggerHandler {
-    List<OrderItem> oldRecords {get; set;} // trigger.old
-    List<OrderItem> newRecords {get; set;} // trigger.new
-    Map<Id, OrderItem> oldMap {get; set;} // trigger.oldMap
-    Map<Id, OrderItem> newMap {get; set;} // trigger.newMap
+    List<OrderItem> oldRecords {get; set;}
+    List<OrderItem> newRecords {get; set;}
+    Map<Id, OrderItem> oldMap {get; set;}
+    Map<Id, OrderItem> newMap {get; set;}
 
     public OrderItemTriggerHandler(List<OrderItem> oldRecords, List<OrderItem> newRecords, Map<Id, OrderItem> oldMap, Map<Id, OrderItem> newMap) {
         this.oldRecords = oldRecords;
@@ -22,11 +22,6 @@ public with sharing class OrderItemTriggerHandler {
     public void beforeInsert(){
         List<Order> orderListBuilded = OrderItemHelper.checkInsertionOrderItem(this.newRecords);
         update orderListBuilded;
-    }
-
-    public void afterInsert(){
-        // List<Order> orderListBuilded = OrderItemHelper.checkInsertionOrderItem(this.newRecords);
-        // update orderListBuilded;
     }
 
     public void beforeUpdate(){

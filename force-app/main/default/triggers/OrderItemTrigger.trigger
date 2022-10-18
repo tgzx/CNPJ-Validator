@@ -17,10 +17,6 @@ trigger OrderItemTrigger on OrderItem (before insert, before update, after inser
             handler.beforeInsert();
         }
 
-        // when AFTER_INSERT{
-        //     handler.afterUpdate();
-        // }
-
         when AFTER_UPDATE{
             handler.afterUpdate();
         }
