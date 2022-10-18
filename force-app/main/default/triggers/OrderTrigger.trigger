@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-15-2022
+ * @last modified on  : 10-18-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
@@ -13,16 +13,13 @@ trigger OrderTrigger on Order (before insert, before update, after insert) {
     );
 
     switch on Trigger.operationType {
-        when BEFORE_INSERT{
-            handler.beforeInsert();
-        }
-
-        // when AFTER_INSERT{
-        //     handler.afterInsert();
-        // }
 
         when BEFORE_UPDATE{
             handler.beforeUpdate();
+        }
+        
+        when AFTER_UPDATE{
+            handler.afterUpdate();
         }
     }
 }

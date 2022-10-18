@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-16-2022
+ * @last modified on  : 10-18-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
@@ -22,23 +22,32 @@ public with sharing class OrderItemTriggerHandler {
     public void beforeInsert(){
         List<Order> orderListBuilded = OrderItemHelper.checkInsertionOrderItem(this.newRecords);
         update orderListBuilded;
+    }
 
-        
-        //OrderItemHelper.ruleMargin(this.newRecords);
-        //OrderItemHelper.ruleFreight(this.newRecords);
-        //OrderItemHelper.ruleTax(this.newRecords);
+    public void afterInsert(){
+        // List<Order> orderListBuilded = OrderItemHelper.checkInsertionOrderItem(this.newRecords);
+        // update orderListBuilded;
     }
 
     public void beforeUpdate(){
+        OrderItemHelper.checkInsertionOrderItem(this.newRecords);
+    }
+
+    public void afterUpdate(){
         List<Order> orderListBuilded = OrderItemHelper.checkInsertionOrderItem(this.newRecords);
         update orderListBuilded;
-        //OrderItemHelper.ruleMargin(this.newRecords);
-        //OrderItemHelper.ruleFreight(this.newRecords);
-        //OrderItemHelper.ruleTax(this.newRecords);
     }
 
     public void afterDelete(){
-        // List<Order> ordeListBuilded = OrderItemHelper.calcPrice(this.newRecords);
-        // update ordeListBuilded;
+
+        Map<Id, Order> orderMapBuilded = OrderItemHelper.calcPriceDelete(this.oldRecords);
+
+        List<Order> orderListBuilded = new List<Order>();
+
+        for(Order iOrder : orderMapBuilded.values()){
+            orderListBuilded.add(iOrder);
+        }
+
+        update orderListBuilded;
     }
 }

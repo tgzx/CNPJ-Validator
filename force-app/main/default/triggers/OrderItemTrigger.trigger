@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-16-2022
+ * @last modified on  : 10-18-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
@@ -15,6 +15,14 @@ trigger OrderItemTrigger on OrderItem (before insert, before update, after inser
     switch on Trigger.operationType {
         when BEFORE_INSERT{
             handler.beforeInsert();
+        }
+
+        // when AFTER_INSERT{
+        //     handler.afterUpdate();
+        // }
+
+        when AFTER_UPDATE{
+            handler.afterUpdate();
         }
 
         when AFTER_DELETE{

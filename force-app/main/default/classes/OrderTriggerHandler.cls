@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-15-2022
+ * @last modified on  : 10-18-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
@@ -19,11 +19,21 @@ public with sharing class OrderTriggerHandler {
         this.newMap = newMap;
     }
 
-    public void beforeInsert(){
-
-    }
-
     public void beforeUpdate(){
         OrderHelper.checkAccountOrder(this.newRecords);
+        List<OrderItem> orderItemList = OrderHelper.checkAccountOrderUpdate(this.newRecords, this.oldRecords);
+        
+        update orderItemList;
+        
+    }
+
+    public void afterUpdate(){
+        Map<Id, Order> orderMapBuilded = OrderHelper.recalcOrder(this.newRecords);
+        List<Order> orderListBuilded = new List<Order>();
+        for(Order iOrder : orderMapBuilded.values()){
+            orderListBuilded.add(iOrder);
+        }
+
+        update orderListBuilded;
     }
 }
