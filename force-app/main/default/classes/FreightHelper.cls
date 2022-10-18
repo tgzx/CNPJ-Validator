@@ -2,24 +2,11 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-14-2022
+ * @last modified on  : 10-18-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public with sharing class FreightHelper {
     public FreightHelper() {}
-
-
-    public static List<OrderItem> refindFreights(List<Freight__c> oldFreightList){
-
-        List<OrderItem> orderItemFullList = new List<OrderItem>([
-            SELECT Id, OrderId, Product2Id, Product2.ProductHierarchy__c, Order.AccountId, Order.Account.AccountGroup__c, Order.Account.Name, Order.AccountAddress__c, Order.AccountAddress__r.City__c, Order.AccountAddress__r.City__r.State__c, Order.AccountAddress__r.City__r.State__r.Country__c, FreightCost__c, TaxPercentage__c
-            FROM OrderItem
-        ]);
-
-        List<OrderItem> orderItemList = OrderItemHelper.ruleFreight(orderItemFullList);
-
-        return orderItemList;
-    }
 
     public static List<Freight__c> checkFreightDuplicated(List<Freight__c> newFreightList){
 

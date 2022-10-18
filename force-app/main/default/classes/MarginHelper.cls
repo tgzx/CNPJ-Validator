@@ -2,23 +2,11 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-14-2022
+ * @last modified on  : 10-18-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public with sharing class MarginHelper {
     public MarginHelper() {}
-
-    public static List<OrderItem> refindMargins(List<Margin__c> oldMarginList){
-
-        List<OrderItem> orderItemFullList = new List<OrderItem>([
-            SELECT Id, OrderId, Product2Id, Product2.ProductHierarchy__c, Order.AccountId, Order.Account.AccountGroup__c, Order.Account.Name, Order.AccountAddress__c, Order.AccountAddress__r.City__c, Order.AccountAddress__r.City__r.State__c, Order.AccountAddress__r.City__r.State__r.Country__c, MarginPercentage__c, TaxPercentage__c
-            FROM OrderItem
-        ]);
-
-        List<OrderItem> orderItemList = OrderItemHelper.ruleMargin(orderItemFullList);
-
-        return orderItemList;
-    }
 
     public static List<Margin__c> checkMarginDuplicated(List<Margin__c> newMarginList){
 

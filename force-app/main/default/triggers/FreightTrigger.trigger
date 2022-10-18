@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-14-2022
+ * @last modified on  : 10-18-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
@@ -15,10 +15,6 @@ trigger FreightTrigger on Freight__c (before insert, before update, after delete
     switch on Trigger.operationType {
         when BEFORE_INSERT{
             handler.beforeInsert();
-        }
-
-        when AFTER_DELETE{
-            handler.afterDelete();
         }
 
         when BEFORE_UPDATE{

@@ -2,23 +2,11 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-15-2022
+ * @last modified on  : 10-18-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public with sharing class TaxHelper {
     public TaxHelper() {}
-
-    public static List<OrderItem> refindTaxs(List<Tax__c> oldTaxList){
-
-        List<OrderItem> orderItemFullList = new List<OrderItem>([
-            SELECT Id, OrderId, Product2Id, Product2.ProductHierarchy__c, Order.AccountId, Order.Account.AccountGroup__c, Order.Account.Name, Order.AccountAddress__c, Order.AccountAddress__r.City__c, Order.AccountAddress__r.City__r.State__c, Order.AccountAddress__r.City__r.State__r.Country__c, TaxPercentage__c, MarginPercentage__c
-            FROM OrderItem
-        ]);
-
-        List<OrderItem> orderItemList = OrderItemHelper.ruleTax(orderItemFullList);
-
-        return orderItemList;
-    }
 
     public static List<Tax__c> checkTaxDuplicated(List<Tax__c> newTaxList){
 

@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-15-2022
+ * @last modified on  : 10-18-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
@@ -23,15 +23,7 @@ public with sharing class TaxTriggerHandler {
         TaxHelper.checkTaxDuplicated(this.newRecords);
     }
 
-    // FUNCIONA MELHOR SE TIVER UM CAMPO STATUS EM PEDIDO, PARA RECALCULAR A PRECIFICAÇÃO APENAS DOS PEDIDOS EM ABERTO
-    public void afterDelete(){
-        List<OrderItem> orderItemList = TaxHelper.refindTaxs(this.oldRecords);
-
-        update orderItemList;
-    }
-
     public void beforeUpdate(){
-        // TaxHelper.checkTaxDuplicatedUpdated(this.newRecords);
         TaxHelper.checkTaxDuplicated(this.newRecords);
     }
 }
