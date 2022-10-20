@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-18-2022
+ * @last modified on  : 10-19-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public with sharing class TaxHelper {
@@ -19,12 +19,14 @@ public with sharing class TaxHelper {
         
         for(Tax__c iNewTax : newTaxList){
             for(Tax__c iOldTax : oldTaxList){
-                if(iOldTax.Product__c            == iNewTax.Product__c 
-                && iOldTax.DistributionCenter__c == iNewTax.DistributionCenter__c 
-                && iOldTax.State__c              == iNewTax.State__c){
-                    iNewTax.addError(Label.TaxDuplicateError);
-                } else {
-                    buildedTaxList.add(iNewTax);
+                if(iNewTax.Id != iOldTax.Id){
+                    if(iOldTax.Product__c            == iNewTax.Product__c 
+                    && iOldTax.DistributionCenter__c == iNewTax.DistributionCenter__c 
+                    && iOldTax.State__c              == iNewTax.State__c){
+                        iNewTax.addError(Label.TaxDuplicateError);
+                    } else {
+                        buildedTaxList.add(iNewTax);
+                    }
                 }
             }
         }

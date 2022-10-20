@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-18-2022
+ * @last modified on  : 10-19-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public with sharing class MarginHelper {
@@ -19,17 +19,19 @@ public with sharing class MarginHelper {
         
         for(Margin__c iNewMargin : newMarginList){
             for(Margin__c iOldMargin : oldMarginList){
-                if(iOldMargin.ProductHierarchy__c   == iNewMargin.ProductHierarchy__c 
-                && iOldMargin.Product__c            == iNewMargin.Product__c 
-                && iOldMargin.AccountGroup__c       == iNewMargin.AccountGroup__c 
-                && iOldMargin.Account__c            == iNewMargin.Account__c 
-                && iOldMargin.DistributionCenter__c == iNewMargin.DistributionCenter__c 
-                && iOldMargin.City__c               == iNewMargin.City__c 
-                && iOldMargin.State__c              == iNewMargin.State__c 
-                && iOldMargin.Country__c            == iNewMargin.Country__c){
-                    iNewMargin.addError(Label.MarginDuplicateError);
-                } else {
-                    buildedMarginList.add(iNewMargin);
+                if(iNewMargin.Id != iOldMargin.Id){
+                    if(iOldMargin.ProductHierarchy__c   == iNewMargin.ProductHierarchy__c 
+                    && iOldMargin.Product__c            == iNewMargin.Product__c 
+                    && iOldMargin.AccountGroup__c       == iNewMargin.AccountGroup__c 
+                    && iOldMargin.Account__c            == iNewMargin.Account__c 
+                    && iOldMargin.DistributionCenter__c == iNewMargin.DistributionCenter__c 
+                    && iOldMargin.City__c               == iNewMargin.City__c 
+                    && iOldMargin.State__c              == iNewMargin.State__c 
+                    && iOldMargin.Country__c            == iNewMargin.Country__c){
+                        iNewMargin.addError(Label.MarginDuplicateError);
+                    } else {
+                        buildedMarginList.add(iNewMargin);
+                    }
                 }
             }
         }

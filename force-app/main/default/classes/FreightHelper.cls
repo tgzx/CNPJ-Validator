@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-18-2022
+ * @last modified on  : 10-19-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public with sharing class FreightHelper {
@@ -19,15 +19,17 @@ public with sharing class FreightHelper {
         
         for(Freight__c iNewFreight : newFreightList){
             for(Freight__c iOldFreight : oldFreightList){
-                if(iOldFreight.ProductHierarchy__c   == iNewFreight.ProductHierarchy__c 
-                && iOldFreight.Product__c            == iNewFreight.Product__c
-                && iOldFreight.DistributionCenter__c == iNewFreight.DistributionCenter__c 
-                && iOldFreight.City__c               == iNewFreight.City__c 
-                && iOldFreight.State__c              == iNewFreight.State__c 
-                && iOldFreight.Country__c            == iNewFreight.Country__c){
-                    iNewFreight.addError(Label.FreightDuplicateError);
-                } else {
-                    buildedFreightList.add(iNewFreight);
+                if(iNewFreight.Id != iOldFreight.Id){
+                    if(iOldFreight.ProductHierarchy__c   == iNewFreight.ProductHierarchy__c 
+                    && iOldFreight.Product__c            == iNewFreight.Product__c
+                    && iOldFreight.DistributionCenter__c == iNewFreight.DistributionCenter__c 
+                    && iOldFreight.City__c               == iNewFreight.City__c 
+                    && iOldFreight.State__c              == iNewFreight.State__c 
+                    && iOldFreight.Country__c            == iNewFreight.Country__c){
+                        iNewFreight.addError(Label.FreightDuplicateError);
+                    } else {
+                        buildedFreightList.add(iNewFreight);
+                    }
                 }
             }
         }

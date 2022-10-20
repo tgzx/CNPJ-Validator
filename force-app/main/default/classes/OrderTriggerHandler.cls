@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-18-2022
+ * @last modified on  : 10-20-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
@@ -20,20 +20,24 @@ public with sharing class OrderTriggerHandler {
     }
 
     public void beforeUpdate(){
-        OrderHelper.checkAccountOrder(this.newRecords);
-        List<OrderItem> orderItemList = OrderHelper.checkAccountOrderUpdate(this.newRecords, this.oldRecords);
-        
-        update orderItemList;
-        
+        if(checkRecursion.runOnce()){
+            OrderHelper.checkAccountOrder(this.newRecords);
+            List<OrderItem> orderItemList = OrderHelper.checkAccountOrderUpdate(this.newRecords, this.oldRecords);
+            //OrderItemHelper.calcPrice(orderItemList);
+        }
     }
 
     public void afterUpdate(){
-        Map<Id, Order> orderMapBuilded = OrderHelper.recalcOrder(this.newRecords);
-        List<Order> orderListBuilded = new List<Order>();
-        for(Order iOrder : orderMapBuilded.values()){
-            orderListBuilded.add(iOrder);
-        }
-
-        update orderListBuilded;
+        // System.debug('afterUpdate');
+        // if(checkRecursion.runOnce()){
+        //     System.debug('afterUpdate');
+        //     Map<Id, Order> orderMapBuilded = OrderHelper.recalcOrder(this.newRecords);
+        //     List<Order> orderListBuilded = new List<Order>();
+        //     for(Order iOrder : orderMapBuilded.values()){
+        //         orderListBuilded.add(iOrder);
+        //     }
+        //     System.debug('afterUpdate');
+        //     update orderListBuilded;
+        // }
     }
 }

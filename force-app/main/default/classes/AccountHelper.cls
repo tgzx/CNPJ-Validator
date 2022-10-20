@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-13-2022
+ * @last modified on  : 10-19-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
@@ -34,8 +34,10 @@ public with sharing class AccountHelper {
                     numbersOnlyCNPJ = numbersOnlyCNPJ + CNPJChar[i];
                 }
             }
-
-            if (!CPNJValEngine(numbersOnlyCNPJ) || iAccountCNPJ.CNPJ__c != regexCNPJ){
+            
+            if (iAccountCNPJ.CNPJ__c != regexCNPJ){
+                iAccountCNPJ.addError('Insira o CNPJ com 14 dígitos e no seguinte formato: 99.999.999/9999-99');
+            } else if (!CPNJValEngine(numbersOnlyCNPJ)){
                 iAccountCNPJ.addError(Label.CNPJValidate);
             }
 
@@ -53,7 +55,7 @@ public with sharing class AccountHelper {
         
         if (CNPJ == '00000000000000' || CNPJ == '11111111111111' || CNPJ == '22222222222222' || CNPJ == '33333333333333' || 
             CNPJ == '44444444444444' || CNPJ == '55555555555555' || CNPJ == '66666666666666' || CNPJ == '77777777777777' || 
-            CNPJ == '88888888888888' || CNPJ == '99999999999999'){
+            CNPJ == '88888888888888' || CNPJ == '99999999999999' || CNPJ.length() != 14){
             
                 return false;
         }

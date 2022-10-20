@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-18-2022
+ * @last modified on  : 10-20-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
@@ -20,29 +20,12 @@ public with sharing class OrderItemTriggerHandler {
     }
 
     public void beforeInsert(){
-        List<Order> orderListBuilded = OrderItemHelper.checkInsertionOrderItem(this.newRecords);
-        update orderListBuilded;
-    }
-
-    public void beforeUpdate(){
         OrderItemHelper.checkInsertionOrderItem(this.newRecords);
     }
 
-    public void afterUpdate(){
-        List<Order> orderListBuilded = OrderItemHelper.checkInsertionOrderItem(this.newRecords);
-        update orderListBuilded;
-    }
-
-    public void afterDelete(){
-
-        Map<Id, Order> orderMapBuilded = OrderItemHelper.calcPriceDelete(this.oldRecords);
-
-        List<Order> orderListBuilded = new List<Order>();
-
-        for(Order iOrder : orderMapBuilded.values()){
-            orderListBuilded.add(iOrder);
+    public void beforeUpdate(){
+        if(checkRecursion.runOnce()){
+            OrderItemHelper.checkInsertionOrderItem(this.newRecords);
         }
-
-        update orderListBuilded;
     }
 }

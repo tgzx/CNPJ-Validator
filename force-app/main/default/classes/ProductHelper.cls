@@ -1,3 +1,10 @@
+/**
+ * @description       : 
+ * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+ * @group             : 
+ * @last modified on  : 10-19-2022
+ * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+**/
 public with sharing class ProductHelper {
     public ProductHelper() {}
 
@@ -7,10 +14,12 @@ public with sharing class ProductHelper {
             FROM Product2
         ];
 
-        for (Product2 newProduct : newProductList) {
-            for (Product2 queryProduct : productQueryList) {
-                if(newProduct.ProductCode == queryProduct.ProductCode){
-                    newProduct.addError(Label.UniqueCodeProduct);
+        for (Product2 newProduct : newProductList){
+            for (Product2 oldProduct : productQueryList){
+                if(newProduct.Id != oldProduct.Id){
+                    if(newProduct.ProductCode == oldProduct.ProductCode){
+                        newProduct.addError(Label.UniqueCodeProduct);
+                    }
                 }
             }            
         }

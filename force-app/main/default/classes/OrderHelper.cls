@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-18-2022
+ * @last modified on  : 10-20-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public with sharing class OrderHelper {
@@ -20,7 +20,7 @@ public with sharing class OrderHelper {
                     if(iNewOrder.AccountId != iOldOrder.AccountId){
                         iNewOrder.addError(Label.NoAllowChangeOrderAccount);
                     }
-
+                    
                     if(iNewOrder.Status == 'Activated' && iOldOrder.Status == 'Activated'){
                         iNewOrder.addError(Label.NoAllowChangeOrderFields);
                     }
@@ -29,80 +29,83 @@ public with sharing class OrderHelper {
         }
     }
 
+    public static List<OrderItem> checkActivatedOrder(List<OrderItem> orderItemList, List<Order> newOrderList){
+
+        List<OrderItem> orderItemListActivated = new List<OrderItem>();
+
+        for(Order iNewOrder : newOrderList){        
+            for(OrderItem iOrderItem : orderItemList){
+                if(iNewOrder.Status == 'Activated'){
+                    orderItemListActivated.add(iOrderItem);
+                }
+            }    
+        }
+
+        return orderItemListActivated;
+    }
+
     public static List<OrderItem> checkAccountOrderUpdate(List<Order> newOrderList, List<Order> oldOrderList){
-        List<Order> orderListFull = new List<Order>([
+        
+        Map<Id, Order> oldOrderMap = buildMapFromTriggerOld(oldOrderList);
+
+        Map<Id, Order> newOrderMap = buildMapFromTriggerNew(newOrderList);
+
+        Map<Id, Order> orderBuildMap = new Map<Id, Order>([
             SELECT Id, AccountId, Account.AccountGroup__c, Account.Name, AccountAddress__c, AccountAddress__r.City__c, AccountAddress__r.City__r.State__c, AccountAddress__r.City__r.State__r.Country__c, DistributionCenter__c
             FROM Order
         ]);
-        Set<Id> orderIdSet = new Set<Id>();
-
-        for(Order iNewOrder : newOrderList){
-            for(Order iBuildOrder : orderListFull){
-                if(iNewOrder.Id == iBuildOrder.Id){
-
-
-                    if(iNewOrder.Account.AccountGroup__c != iBuildOrder.Account.AccountGroup__c && iNewOrder.Account.AccountGroup__c != null){
-                        iBuildOrder.Account.AccountGroup__c = iNewOrder.Account.AccountGroup__c;
+        
+        for(Order iNewOrder : newOrderMap.values()){
+            for(Order iOldOrder : oldOrderMap.values()){
+                if(iNewOrder.Id == iOldOrder.Id){
+                    if(iOldOrder.Account.AccountGroup__c != iNewOrder.Account.AccountGroup__c || iOldOrder.Account.Name != iNewOrder.Account.Name || iOldOrder.AccountAddress__c != iNewOrder.AccountAddress__c || iOldOrder.AccountAddress__r.City__c != iNewOrder.AccountAddress__r.City__c || iOldOrder.AccountAddress__r.City__r.State__c != iNewOrder.AccountAddress__r.City__r.State__c || iOldOrder.AccountAddress__r.City__r.State__r.Country__c != iNewOrder.AccountAddress__r.City__r.State__r.Country__c || iOldOrder.DistributionCenter__c != iNewOrder.DistributionCenter__c){
+                        orderBuildMap.put(iNewOrder.Id, iNewOrder);
                     }
-
-                    if(iNewOrder.Account.Name != iBuildOrder.Account.Name && iNewOrder.Account.Name != null){
-                        iBuildOrder.Account.Name = iNewOrder.Account.Name;
-                    }
-
-                    if(iNewOrder.AccountAddress__c != iBuildOrder.AccountAddress__c && iNewOrder.AccountAddress__c != null){
-                        iBuildOrder.AccountAddress__c = iNewOrder.AccountAddress__c;
-                    }
-
-                    if(iNewOrder.AccountAddress__r.City__c != iBuildOrder.AccountAddress__r.City__c && iNewOrder.AccountAddress__r.City__c != null){
-                        iBuildOrder.AccountAddress__r.City__c = iNewOrder.AccountAddress__r.City__c;
-                    }
-
-                    if(iNewOrder.AccountAddress__r.City__r.State__c != iBuildOrder.AccountAddress__r.City__r.State__c && iNewOrder.AccountAddress__r.City__r.State__c != null){
-                        iBuildOrder.AccountAddress__r.City__r.State__c = iNewOrder.AccountAddress__r.City__r.State__c;
-                    }
-
-                    if(iNewOrder.AccountAddress__r.City__r.State__r.Country__c != iBuildOrder.AccountAddress__r.City__r.State__r.Country__c && iNewOrder.AccountAddress__r.City__r.State__r.Country__c != null){
-                        iBuildOrder.AccountAddress__r.City__r.State__r.Country__c = iNewOrder.AccountAddress__r.City__r.State__r.Country__c;
-                    }
-
-                    if(iNewOrder.DistributionCenter__c != iBuildOrder.DistributionCenter__c && iNewOrder.DistributionCenter__c != null){
-                        iBuildOrder.DistributionCenter__c = iNewOrder.DistributionCenter__c;
-                    }
-
-
                 }
             }
         }
 
-        for(Order iOrder : newOrderList){
-            orderIdSet.add(iOrder.Id);
+        system.debug('orderBuildMap = >' + orderBuildMap);
+
+        Set<Id> newOrderIdSet = new Set<Id>();
+
+        for(Order iOrder : newOrderMap.values()){
+            newOrderIdSet.add(iOrder.Id);
         }
 
         List<OrderItem> orderItemForRecalcList = new List<OrderItem>([
-            SELECT Id, Product2Id, FinalPrice__c, OrderId, ListPrice, FreightCost__c, TaxPercentage__c, MarginPercentage__c, UnitPrice, NoMarginPrice__c, Discount__c, Quantity, ProductionCost__c, Product2.ProductHierarchy__c
+            SELECT Id, Product2Id, FinalPrice__c, OrderId, ListPrice, FreightCost__c, TaxPercentage__c, MarginPercentage__c, UnitPrice, Discount__c, Quantity, Product2.ProductHierarchy__c, Product2.Name
             FROM OrderItem
-            WHERE OrderId IN: orderIdSet
+            WHERE OrderId IN: newOrderIdSet
         ]);
 
-        for(OrderItem iOrderItem : orderItemForRecalcList){
-            iOrderItem.TaxPercentage__c = 0;
-            iOrderItem.FreightCost__c = 0;
-            iOrderItem.MarginPercentage__c = 0;
-        }
+        List<OrderItem> orderItemListBuildedMargin = OrderItemHelper.findTax(orderItemForRecalcList, orderBuildMap.values());
+        List<OrderItem> orderItemListBuildedFreight = OrderItemHelper.findMargin(orderItemListBuildedMargin, orderBuildMap.values());
+        List<OrderItem> orderItemListBuildedTax = OrderItemHelper.findFreight(orderItemListBuildedFreight, orderBuildMap.values());
 
-        List<OrderItem> orderItemListBuilded = recalcUpdateOrder(orderItemForRecalcList, orderListFull);
+        OrderItemHelper.calcPrice(orderItemListBuildedTax);
 
-        for(Order iOrder : newOrderList){
-            for(OrderItem iOrderItem : orderItemListBuilded){
-                if(iOrderItem.OrderId == iOrder.Id){
-                    if(iOrderItem.TaxPercentage__c == null || iOrderItem.TaxPercentage__c == 0 || iOrderItem.FreightCost__c == null || iOrderItem.FreightCost__c == 0 || iOrderItem.MarginPercentage__c == null || iOrderItem.MarginPercentage__c == 0){
-                        iOrder.addError(Label.NoParametersFoundedForOrder);
-                    }
-                }
-            }
-        }
+        System.debug('orderItemListBuilded => ' + orderItemListBuildedTax);
+
+        // for(Order iOrder : newOrderList){
+        //     for(OrderItem iOrderItem : orderItemListBuilded){
+        //         if(iOrderItem.OrderId == iOrder.Id){
+        //             if(iOrderItem.TaxPercentage__c == null || iOrderItem.TaxPercentage__c == 0){
+        //                 iOrder.addError('Não foi encontrado Imposto para ' + iOrderItem.Product2.Name);
+        //             }
+
+        //             if (iOrderItem.FreightCost__c == null || iOrderItem.FreightCost__c == 0){
+        //                 iOrder.addError('Não foi encontrado Frete para ' + iOrderItem.Product2.Name);
+        //             }
+
+        //             if (iOrderItem.MarginPercentage__c == null || iOrderItem.MarginPercentage__c == 0){
+        //                 iOrder.addError('Não foi encontrado Margem para ' + iOrderItem.Product2.Name);
+        //             }
+        //         }
+        //     }
+        // }
         
-        return orderItemListBuilded;
+        return orderItemListBuildedTax;
     }
 
     public static List<OrderItem> recalcUpdateOrder(List<OrderItem> orderItemList,  List<Order> orderList){
@@ -132,6 +135,7 @@ public with sharing class OrderHelper {
         Map<OrderItem, OrderItem> orderItemMap = new Map<OrderItem, OrderItem>();
 
         for(OrderItem iOrderItem : orderItemListBuildedMargin){
+            system.debug('iOrderItem ' + iOrderItem);
             orderItemMap.put(iOrderItem, iOrderItem);
         }
 
@@ -146,60 +150,155 @@ public with sharing class OrderHelper {
         return orderItemMap.values();
     }
 
-    public static Map<Id, Order> recalcOrder(List<Order> newOrderList){
+    public static Map<Id, Order> buildMapFromTriggerNew(List<Order> orderList){
+        
+        Set<Id> newOrderIdSet = new Set<Id>();
+        Set<Id> accountSetId = new Set<Id>();
+        Set<Id> addressSetId = new Set<Id>();
 
-        Map<Id, Order> orderMapBuilded = new Map<Id, Order>([
-            SELECT Id, Status, OrderTotalPrice__c
+        Map<Id, Order> orderMap = new Map<Id, Order>([
+            SELECT Id, AccountId, Account.AccountGroup__c, Account.Name, AccountAddress__c, AccountAddress__r.City__c, AccountAddress__r.City__r.State__c, AccountAddress__r.City__r.State__r.Country__c, DistributionCenter__c
             FROM Order
         ]);
 
-        List<OrderItem> orderItemList = new List<OrderItem>([
-            SELECT Id, Product2Id, Product2.ProductHierarchy__c, MarginPercentage__c, TaxPercentage__c
-            FROM OrderItem
+        for(Order iOrder : orderList){
+            newOrderIdSet.add(iOrder.Id);
+            accountSetId.add(iOrder.AccountId);
+            addressSetId.add(iOrder.AccountAddress__c);
+        }
+        List<Account> accountList = new List<Account>([
+            SELECT Id, Account.AccountGroup__r.Id
+            FROM Account
+            WHERE Id IN: accountSetId
         ]);
 
-        for(Order iOrder : newOrderList){
-            if(iOrder.OrderTotalPrice__c == null){
-                iOrder.OrderTotalPrice__c = 0;
+        List<AccountAddress__c> addressList = new List<AccountAddress__c>([
+            SELECT Id, City__c, City__r.State__c, City__r.State__r.Country__c
+            FROM AccountAddress__c
+            WHERE Id IN: addressSetId
+        ]);
+
+        for(Order iOrder : orderMap.values()){
+            for(Account iAccount : accountList){
+                iOrder.AccountId = iAccount.Id;
+                iOrder.Account.AccountGroup__c = iAccount.AccountGroup__c;
             }
 
-            Decimal finalPrice = iOrder.OrderTotalPrice__c;
-
-            for(OrderItem iOrderItem : orderItemList){
-                if(iOrderItem.OrderId == iOrder.Id){
-                    if(iOrderItem.ProductionCost__c == null){
-                        iOrderItem.ProductionCost__c = 0;
-                    }
-    
-                    if(iOrderItem.ListPrice != null && iOrderItem.TaxPercentage__c != null){
-                        iOrderItem.ProductionCost__c = iOrderItem.UnitPrice * iOrderItem.Quantity;
-                        finalPrice += iOrderItem.FinalPrice__c = (iOrderItem.ProductionCost__c + iOrderItem.FreightCost__c) * (1 + (iOrderItem.TaxPercentage__c/100)) * (1 + (iOrderItem.MarginPercentage__c/100));
-                        iOrderItem.NoMarginPrice__c = (iOrderItem.ProductionCost__c + iOrderItem.FreightCost__c) * (1 + (iOrderItem.TaxPercentage__c/100));
-                        iOrderItem.Discount__c = (iOrderItem.FinalPrice__c - iOrderItem.UnitPrice) / iOrderItem.FinalPrice__c;
-                    }
-    
-                    iOrder.OrderTotalPrice__c = finalPrice;
-                }
+            for(AccountAddress__c iAddress : addressList){
+                iOrder.AccountAddress__c = iAddress.Id;
+                iOrder.AccountAddress__r.City__c = iAddress.City__c;
+                iOrder.AccountAddress__r.City__r.State__c = iAddress.City__r.State__c;
+                iOrder.AccountAddress__r.City__r.State__r.Country__c = iAddress.City__r.State__r.Country__c;
             }
-
-            orderMapBuilded.put(iOrder.Id, iOrder);
-            
         }
 
-        return orderMapBuilded;
+        return orderMap;
     }
+
+    public static Map<Id, Order> buildMapFromTriggerOld(List<Order> orderList){
+        
+        Set<Id> newOrderIdSet = new Set<Id>();
+        Set<Id> accountSetId = new Set<Id>();
+        Set<Id> addressSetId = new Set<Id>();
+
+        Map<Id, Order> orderMap = new Map<Id, Order>([
+            SELECT Id, AccountId, Account.AccountGroup__c, Account.Name, AccountAddress__c, AccountAddress__r.City__c, AccountAddress__r.City__r.State__c, AccountAddress__r.City__r.State__r.Country__c, DistributionCenter__c
+            FROM Order
+        ]);
+
+        for(Order iOrder : orderList){
+            newOrderIdSet.add(iOrder.Id);
+            accountSetId.add(iOrder.AccountId);
+            addressSetId.add(iOrder.AccountAddress__c);
+        }
+        List<Account> accountList = new List<Account>([
+            SELECT Id, Account.AccountGroup__r.Id
+            FROM Account
+            WHERE Id IN: accountSetId
+        ]);
+
+        List<AccountAddress__c> addressList = new List<AccountAddress__c>([
+            SELECT Id, City__c, City__r.State__c, City__r.State__r.Country__c
+            FROM AccountAddress__c
+            WHERE Id IN: addressSetId
+        ]);
+
+        for(Order iOrder : orderMap.values()){
+            for(Account iAccount : accountList){
+                iOrder.AccountId = iAccount.Id;
+                iOrder.Account.AccountGroup__c = iAccount.AccountGroup__c;
+            }
+
+            for(AccountAddress__c iAddress : addressList){
+                iOrder.AccountAddress__c = iAddress.Id;
+                iOrder.AccountAddress__r.City__c = iAddress.City__c;
+                iOrder.AccountAddress__r.City__r.State__c = iAddress.City__r.State__c;
+                iOrder.AccountAddress__r.City__r.State__r.Country__c = iAddress.City__r.State__r.Country__c;
+            }
+        }
+
+        return orderMap;
+    }
+
+    // public static Map<Id, Order> recalcOrder(List<Order> newOrderList){
+
+    //     Map<Id, Order> orderMapBuilded = new Map<Id, Order>([
+    //         SELECT Id, Status, OrderTotalPrice__c
+    //         FROM Order
+    //     ]);
+
+    //     List<OrderItem> orderItemList = new List<OrderItem>([
+    //         SELECT Id, Product2Id, Product2.ProductHierarchy__c, MarginPercentage__c, TaxPercentage__c
+    //         FROM OrderItem
+    //     ]);
+
+    //     for(Order iOrder : newOrderList){
+    //         if(iOrder.OrderTotalPrice__c == null){
+    //             iOrder.OrderTotalPrice__c = 0;
+    //         }
+
+    //         Decimal finalPrice = iOrder.OrderTotalPrice__c;
+
+    //         for(OrderItem iOrderItem : orderItemList){
+    //             if(iOrderItem.OrderId == iOrder.Id){
+    //                 if(iOrderItem.ProductionCost__c == null){
+    //                     iOrderItem.ProductionCost__c = 0;
+    //                 }
+    
+    //                 if(iOrderItem.ListPrice != null && iOrderItem.TaxPercentage__c != null){
+    //                     iOrderItem.ProductionCost__c = iOrderItem.UnitPrice * iOrderItem.Quantity;
+    //                     finalPrice += iOrderItem.FinalPrice__c = (iOrderItem.ProductionCost__c + iOrderItem.FreightCost__c) * (1 + (iOrderItem.TaxPercentage__c/100)) * (1 + (iOrderItem.MarginPercentage__c/100));
+    //                     iOrderItem.Discount__c = (iOrderItem.FinalPrice__c - iOrderItem.UnitPrice) / iOrderItem.FinalPrice__c;
+    //                 }
+    
+    //                 iOrder.OrderTotalPrice__c = finalPrice;
+    //             }
+    //         }
+
+    //         system.debug('finalPrice => ' + finalPrice);
+    //         orderMapBuilded.put(iOrder.Id, iOrder);
+            
+    //     }
+
+    //     return orderMapBuilded;
+    // }
 
     public static List<OrderItem> findTax(List<OrderItem> orderItemList, Map<Id, Tax__c> TaxMapList, List<Order> orderList){
         
         List<OrderItem> orderItemBuildedList = new List<OrderItem>();
         
         for(OrderItem iOrderItem : orderItemList){
-            
-            Decimal taxValue = 0;
-
             for(Order iOrder : orderList){
                 if(iOrderItem.OrderId == iOrder.Id){
                     for(Tax__c iTax : TaxMapList.values()){
+                        if(iTax.Product__c == iOrderItem.Product2Id ){
+
+                            if( iTax.DistributionCenter__c == iOrder.DistributionCenter__c ){
+
+                                if( iTax.State__c == iOrder.AccountAddress__r.City__r.State__c){
+                                }
+                            }
+                        }
                         if(iTax.Product__c == iOrderItem.Product2Id && iTax.DistributionCenter__c == iOrder.DistributionCenter__c && iTax.State__c == iOrder.AccountAddress__r.City__r.State__c){
                             iOrderItem.TaxPercentage__c = iTax.TaxCosts__c;
                         }
