@@ -2,16 +2,17 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-20-2022
+ * @last modified on  : 10-22-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public with sharing class OrderItemHelper {
     public OrderItemHelper() {}
 
-    public static void checkInsertionOrderItem(List<OrderItem> orderItemList){
-
+    public static List<OrderItem> checkInsertionOrderItem(List<OrderItem> orderItemList){
+        
+        List<OrderItem> orderItemListFull = queryAllFieldsForTriggerNew(orderItemList);
         Set<Id> orderIdSet = new Set<Id>();
-        for(OrderItem iOrderItem : orderItemList){
+        for(OrderItem iOrderItem : orderItemListFull){
             orderIdSet.add(iOrderItem.OrderId);
         }
 
@@ -21,20 +22,34 @@ public with sharing class OrderItemHelper {
             WHERE Id IN: orderIdSet
         ]);
 
-        List<OrderItem> orderItemListActivated = OrderHelper.checkActivatedOrder(orderItemList, orderList);
+        List<OrderItem> orderItemListActivated = checkActivatedOrder(orderItemListFull, orderList);
 
         for(OrderItem iOrderItem : orderItemListActivated){
             iOrderItem.addError(Label.NoAllowChangeOrderFields);
         }
-
-        List<OrderItem> orderItemListBuildedMargin = findTax(orderItemList, orderList);
+        
+        List<OrderItem> orderItemListBuildedMargin = findTax(orderItemListFull, orderList);
         List<OrderItem> orderItemListBuildedFreight = findMargin(orderItemListBuildedMargin, orderList);
         List<OrderItem> orderItemListBuildedTax = findFreight(orderItemListBuildedFreight, orderList);
 
-        calcPrice(orderItemListBuildedTax);
+        for(OrderItem iOrderItem : orderItemListBuildedTax){
+            if(iOrderItem.TaxPercentage__c == 0 || iOrderItem.TaxPercentage__c == null){
+                iOrderItem.addError(Label.NoParametersErrorMessageTax);
+            }
+
+            if(iOrderItem.MarginPercentage__c == 0 || iOrderItem.MarginPercentage__c == null){
+                iOrderItem.addError(Label.NoParametersErrorMessageMargin);
+            } 
+
+            if(iOrderItem.FreightCost__c == 0 || iOrderItem.FreightCost__c == null){
+                iOrderItem.addError(Label.NoParametersErrorMessageFreight);
+            }
+        }
+        
+        return calcPrice(orderItemListBuildedTax);
     }
 
-    public static void calcPrice(List<OrderItem> orderItemList){
+    public static List<OrderItem> calcPrice(List<OrderItem> orderItemList){
 
         Set<Id> orderSetId = new Set<Id>();
 
@@ -48,15 +63,19 @@ public with sharing class OrderItemHelper {
             WHERE Status = 'Draft' AND
             Id IN: orderSetId
         ]);
-
+        
         for(Order iOrder : orderList){
             for(OrderItem iOrderItem : orderItemList){
-                if(iOrderItem.ListPrice != null && iOrderItem.TaxPercentage__c != null){
-                    iOrderItem.FinalPrice__c = (iOrderItem.UnitPrice + iOrderItem.FreightCost__c) * (1 + (iOrderItem.TaxPercentage__c/100)) * (1 + (iOrderItem.MarginPercentage__c/100));
-                    iOrderItem.Discount__c = (iOrderItem.FinalPrice__c - iOrderItem.UnitPrice) / iOrderItem.FinalPrice__c;
+                if(iOrder.Id == iOrderItem.OrderId){
+                    if(iOrderItem.ListPrice != null && iOrderItem.TaxPercentage__c != null && iOrderItem.MarginPercentage__c != null && iOrderItem.FreightCost__c != null && iOrderItem.Quantity != 0){
+                        iOrderItem.FinalPrice__c = ((iOrderItem.UnitPrice + iOrderItem.FreightCost__c) * (1 + (iOrderItem.TaxPercentage__c/100)) * (1 + (iOrderItem.MarginPercentage__c/100))) * iOrderItem.Quantity;
+                        iOrderItem.Discount__c = (iOrderItem.FinalPrice__c - iOrderItem.UnitPrice) / iOrderItem.FinalPrice__c;
+                    }
                 }
             }
         }
+
+        return orderItemList;
     }
 
     public static List<OrderItem> findTax(List<OrderItem> orderItemList, List<Order> orderList){
@@ -76,7 +95,7 @@ public with sharing class OrderItemHelper {
         
         for(OrderItem iOrderItem : orderItemList){
             
-            Decimal taxValue = 0;
+            iOrderItem.TaxPercentage__c = 0;
 
             for(Order iOrder : orderList){
                 if(iOrderItem.OrderId == iOrder.Id){
@@ -84,10 +103,6 @@ public with sharing class OrderItemHelper {
                         if(iTax.Product__c == iOrderItem.Product2Id && iTax.DistributionCenter__c == iOrder.DistributionCenter__c && iTax.State__c == iOrder.AccountAddress__r.City__r.State__c){
                             iOrderItem.TaxPercentage__c = iTax.TaxCosts__c;
                         }
-                    }
-                    
-                    if(iOrderItem.TaxPercentage__c == 0 || iOrderItem.TaxPercentage__c == null){
-                        iOrderItem.addError(Label.NoParametersErrorMessageTax);
                     }
 
                     orderItemBuildedList.add(iOrderItem);
@@ -99,22 +114,16 @@ public with sharing class OrderItemHelper {
     }
 
     public static List<OrderItem> findFreight(List<OrderItem> orderItemList, List<Order> orderList){
-        
         Map<Id, Freight__c> FreightMapList = new Map<Id, Freight__c>([
             SELECT Id, ProductHierarchy__c, Product__c, DistributionCenter__c, City__c, State__c, Country__c, Status__c, Value__c
             FROM Freight__c
             WHERE Status__c = 'Aprovado'
         ]);
-
-        List<OrderItem> orderItemFullList = new List<OrderItem>([
-            SELECT Id, Product2Id, Product2.ProductHierarchy__c, MarginPercentage__c, TaxPercentage__c
-            FROM OrderItem
-        ]);
         
         List<OrderItem> orderItemBuildedList = new List<OrderItem>();
-        
-        for(OrderItem iOrderItem : orderItemList){
 
+        for(OrderItem iOrderItem : orderItemList){
+            
             Decimal freightValue = 0;
             Integer score = 0;
             Integer oldScore = 0;
@@ -122,8 +131,8 @@ public with sharing class OrderItemHelper {
             for(Order iOrder : orderList){
                 if(iOrderItem.OrderId == iOrder.Id){
                     for(Freight__c iFreight : FreightMapList.values()){
-
-                        if (((iFreight.Product__c == iOrderItem.Product2Id && iFreight.Product__c != null ) || ( iFreight.ProductHierarchy__c == iOrderItem.Product2.ProductHierarchy__c && iFreight.ProductHierarchy__c != null)) && ((iFreight.City__c == iOrder.AccountAddress__r.City__c && iFreight.City__c != null) || (iFreight.State__c == iOrder.AccountAddress__r.City__r.State__c && iFreight.State__c != null) || (iFreight.Country__c == iOrder.AccountAddress__r.City__r.State__r.Country__c && iFreight.Country__c != null))){
+                        if ((iFreight.Product__c == iOrderItem.Product2Id  ||  iFreight.ProductHierarchy__c == iOrderItem.Product2.ProductHierarchy__c) 
+                        && (iFreight.City__c == iOrder.AccountAddress__r.City__c || iFreight.State__c == iOrder.AccountAddress__r.City__r.State__c || iFreight.Country__c == iOrder.AccountAddress__r.City__r.State__r.Country__c)){
 
                             score = 0;
 
@@ -161,12 +170,6 @@ public with sharing class OrderItemHelper {
                     }
 
                     iOrderItem.FreightCost__c = freightValue;
-                    system.debug('oldScore => ' + oldScore);
-                    
-                    if(oldScore == 0){
-                        iOrderItem.addError(Label.NoParametersErrorMessageFreight);
-                    } 
-        
                     orderItemBuildedList.add(iOrderItem);
                 }
             }
@@ -184,7 +187,7 @@ public with sharing class OrderItemHelper {
         ]);
 
         List<OrderItem> orderItemBuildedList = new List<OrderItem>();
-        
+
         for(OrderItem iOrderItem : orderItemList){
 
             Decimal marginValue = 0;
@@ -195,7 +198,9 @@ public with sharing class OrderItemHelper {
                 if(iOrderItem.OrderId == iOrder.Id){
                     for(Margin__c iMargin : MarginMapList.values()){
 
-                        if (((iMargin.Product__c == iOrderItem.Product2Id && iMargin.Product__c != null ) || ( iMargin.ProductHierarchy__c == iOrderItem.Product2.ProductHierarchy__c && iMargin.ProductHierarchy__c != null)) && ((iMargin.Account__c == iOrder.AccountId && iMargin.Account__c != null) || (iMargin.AccountGroup__c == iOrder.Account.AccountGroup__c && iMargin.AccountGroup__c != null)) && ((iMargin.City__c == iOrder.AccountAddress__r.City__c && iMargin.City__c != null) || (iMargin.State__c == iOrder.AccountAddress__r.City__r.State__c && iMargin.State__c != null) || (iMargin.Country__c == iOrder.AccountAddress__r.City__r.State__r.Country__c && iMargin.Country__c != null))){
+                        if ((iMargin.Product__c == iOrderItem.Product2Id || iMargin.ProductHierarchy__c == iOrderItem.Product2.ProductHierarchy__c) 
+                        && (iMargin.Account__c == iOrder.AccountId || iMargin.AccountGroup__c == iOrder.Account.AccountGroup__c) 
+                        && (iMargin.City__c == iOrder.AccountAddress__r.City__c || iMargin.State__c == iOrder.AccountAddress__r.City__r.State__c || iMargin.Country__c == iOrder.AccountAddress__r.City__r.State__r.Country__c)){
 
                             score = 0;
 
@@ -243,16 +248,72 @@ public with sharing class OrderItemHelper {
                     }
 
                     iOrderItem.MarginPercentage__c = marginValue;
-                    
-                    if(oldScore == 0){
-                        iOrderItem.addError(Label.NoParametersErrorMessageMargin);
-                    } 
-        
                     orderItemBuildedList.add(iOrderItem);
                 }
             }
         }
 
         return orderItemBuildedList;
+    }
+
+    public static void checkQuantityPriceFields(List<OrderItem> orderItemList){
+        List<Order> orderList = new List<Order>([
+            SELECT Id, AccountId, Status
+            FROM Order
+        ]);
+
+        for(OrderItem iOrderItem : orderItemList){
+            for(Order iOrder : orderList){
+                if(iOrderItem.OrderId == iOrder.Id){
+                    if(iOrderItem.Quantity == 0 || iOrderItem.UnitPrice == 0){
+                        iOrderItem.addError(Label.NoAllowZeroedFields);
+                    }
+                }
+            }
+        }
+    }
+
+    public static List<OrderItem> checkActivatedOrder(List<OrderItem> orderItemList, List<Order> newOrderList){
+
+        List<OrderItem> orderItemListActivated = new List<OrderItem>();
+
+        List<Order> oldOrderList = new List<Order>([
+            SELECT Id, AccountId, Status
+            FROM Order
+        ]);
+
+        for(Order iOldOrder : oldOrderList){
+            for(Order iNewOrder : newOrderList){        
+                for(OrderItem iOrderItem : orderItemList){
+                    if(iNewOrder.Status == 'Draft' && iOldOrder.Status == 'Activated'){
+                        orderItemListActivated.add(iOrderItem);
+                    }
+                }    
+            }
+        }
+
+        return orderItemListActivated;
+    }
+
+    public static List<OrderItem> queryAllFieldsForTriggerNew(List<OrderItem> orderItemList){
+        Set<Id> orderIdSet = new Set<Id>();
+        Set<Id> product2SetId = new Set<Id>();
+        
+        for(OrderItem iOrderItem : orderItemList){
+            product2SetId.add(iOrderItem.Product2Id);
+            orderIdSet.add(iOrderItem.OrderId);
+        }
+
+        Map<Id, OrderItem> orderItemMap = new Map<Id, OrderItem>([
+            SELECT Id, Product2Id, FinalPrice__c, OrderId, ListPrice, FreightCost__c, TaxPercentage__c, MarginPercentage__c, UnitPrice, Discount__c, Quantity, Product2.ProductHierarchy__c, Product2.Name
+            FROM OrderItem
+            WHERE Product2Id =: product2SetId
+        ]);
+
+        for(OrderItem iOrderItem : OrderItemList){
+            orderItemMap.put(iOrderItem.Product2Id, iOrderItem);
+        }
+
+        return orderItemMap.values();
     }
 }

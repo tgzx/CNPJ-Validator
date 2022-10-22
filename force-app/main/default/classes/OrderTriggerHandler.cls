@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-20-2022
+ * @last modified on  : 10-21-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
@@ -22,22 +22,13 @@ public with sharing class OrderTriggerHandler {
     public void beforeUpdate(){
         if(checkRecursion.runOnce()){
             OrderHelper.checkAccountOrder(this.newRecords);
-            List<OrderItem> orderItemList = OrderHelper.checkAccountOrderUpdate(this.newRecords, this.oldRecords);
-            //OrderItemHelper.calcPrice(orderItemList);
+            List<OrderItem> orderItemList = OrderHelper.checkOrderFields(this.newRecords, this.oldRecords);
+            OrderHelper.verifyEmptyFields(orderItemList, this.newRecords);
         }
     }
 
     public void afterUpdate(){
-        // System.debug('afterUpdate');
-        // if(checkRecursion.runOnce()){
-        //     System.debug('afterUpdate');
-        //     Map<Id, Order> orderMapBuilded = OrderHelper.recalcOrder(this.newRecords);
-        //     List<Order> orderListBuilded = new List<Order>();
-        //     for(Order iOrder : orderMapBuilded.values()){
-        //         orderListBuilded.add(iOrder);
-        //     }
-        //     System.debug('afterUpdate');
-        //     update orderListBuilded;
-        // }
+        List<OrderItem> orderItemList = OrderHelper.checkOrderFields(this.newRecords, this.oldRecords);
+        update orderItemList;
     }
 }

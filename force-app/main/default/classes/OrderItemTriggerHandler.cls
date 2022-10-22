@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-20-2022
+ * @last modified on  : 10-22-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
@@ -20,12 +20,15 @@ public with sharing class OrderItemTriggerHandler {
     }
 
     public void beforeInsert(){
-        OrderItemHelper.checkInsertionOrderItem(this.newRecords);
+        if(checkRecursion.runOnce()){
+            OrderItemHelper.checkQuantityPriceFields(this.newRecords);
+            OrderItemHelper.checkInsertionOrderItem(this.newRecords);
+        }
     }
 
     public void beforeUpdate(){
-        if(checkRecursion.runOnce()){
+        if(checkRecursion.runOnce()){        
             OrderItemHelper.checkInsertionOrderItem(this.newRecords);
-        }
+        }    
     }
 }

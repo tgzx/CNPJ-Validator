@@ -2,11 +2,11 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-18-2022
+ * @last modified on  : 10-20-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
-trigger OrderTrigger on Order (before insert, before update, after insert) {
+trigger OrderTrigger on Order (before update, after update) {
 
     OrderTriggerHandler handler = new OrderTriggerHandler(
         Trigger.old, Trigger.new, Trigger.oldMap, Trigger.newMap
