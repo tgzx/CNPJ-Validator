@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-19-2022
+ * @last modified on  : 10-22-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
@@ -117,5 +117,4 @@ public with sharing class AccountHelper {
         }
         return testeBoolean;
     }
-    
 }

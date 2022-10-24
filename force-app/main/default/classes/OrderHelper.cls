@@ -2,13 +2,13 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-21-2022
+ * @last modified on  : 10-24-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public with sharing class OrderHelper {
     public OrderHelper() {}
 
-    public static void checkAccountOrder(List<Order> newOrderList){
+    public static void checkAccountAndFieldsOrder(List<Order> newOrderList){
         List<Order> oldOrderList = new List<Order>([
             SELECT Id, AccountId, Status
             FROM Order
@@ -17,19 +17,19 @@ public with sharing class OrderHelper {
         for(Order iNewOrder : newOrderList){
             for(Order iOldOrder : oldOrderList){
                 if(iNewOrder.Id == iOldOrder.Id){
-                    if(iNewOrder.AccountId != iOldOrder.AccountId){
-                        iNewOrder.addError(Label.NoAllowChangeOrderAccount);
-                    }
-                    
                     if(iNewOrder.Status == 'Activated' && iOldOrder.Status == 'Activated'){
                         iNewOrder.addError(Label.NoAllowChangeOrderFields);
-                    }
+                    } else if(iNewOrder.AccountId != iOldOrder.AccountId){
+                        iNewOrder.addError(Label.NoAllowChangeOrderAccount);
+                    }    
                 }
             }
         }
     }
 
     public static List<OrderItem> checkOrderFields(List<Order> newOrderList, List<Order> oldOrderList){
+
+        checkAccountAndFieldsOrder(newOrderList);
 
         Map<Id, Order> oldOrderMap = buildMapFromTriggerOld(oldOrderList);
 
@@ -66,6 +66,8 @@ public with sharing class OrderHelper {
         List<OrderItem> orderItemListBuildedMargin = OrderItemHelper.findMargin(orderItemListBuildedTax, newOrderBuildMap.values());
         List<OrderItem> orderItemListBuildedFreight = OrderItemHelper.findFreight(orderItemListBuildedMargin, newOrderBuildMap.values());
         List<OrderItem> orderItemListRecalculated = OrderItemHelper.calcPrice(orderItemListBuildedFreight);
+
+        verifyEmptyFields(orderItemListRecalculated, newOrderList);
 
         return orderItemListRecalculated;
     }
