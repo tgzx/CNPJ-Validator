@@ -20,15 +20,10 @@ public with sharing class OrderItemTriggerHandler {
     }
 
     public void beforeInsert(){
-        if(checkRecursion.runOnce()){
-            OrderItemHelper.checkQuantityPriceFields(this.newRecords);
-            OrderItemHelper.checkInsertionOrderItem(this.newRecords);
-        }
+        OrderItemHelper.checkInsertionOrderItem(this.newRecords);
     }
 
     public void beforeUpdate(){
-        if(checkRecursion.runOnce()){        
-            OrderItemHelper.checkInsertionOrderItem(this.newRecords);
-        }    
+        OrderItemHelper.checkInsertionOrderItem(this.newRecords);
     }
 }

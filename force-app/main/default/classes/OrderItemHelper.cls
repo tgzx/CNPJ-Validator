@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-24-2022
+ * @last modified on  : 10-25-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public with sharing class OrderItemHelper {
@@ -22,12 +22,20 @@ public with sharing class OrderItemHelper {
             WHERE Id IN: orderIdSet
         ]);
 
-        List<OrderItem> orderItemListActivated = checkActivatedOrder(orderItemListFull, orderList);
+        checkQuantityPriceFields(orderItemList);
 
-        for(OrderItem iOrderItem : orderItemListActivated){
-            iOrderItem.addError(Label.NoAllowChangeOrderFields);
+        Boolean canChangeOrderValues = OrderHelper.checkAccountAndFieldsOrder(orderList);
+
+        if(checkRecursion.runOnce()){
+            for(Order iOrder : orderList){
+                for(OrderItem iOrderItem : orderItemList){
+                    if(canChangeOrderValues == false && iOrder.Status == 'Activated' && iOrderItem.OrderId == iOrder.Id){
+                        iOrderItem.addError(Label.NoAllowChangeOrderFields);
+                    }
+                }  
+            }
         }
-        
+
         List<OrderItem> orderItemListBuildedMargin = findTax(orderItemListFull, orderList);
         List<OrderItem> orderItemListBuildedFreight = findMargin(orderItemListBuildedMargin, orderList);
         List<OrderItem> orderItemListBuildedTax = findFreight(orderItemListBuildedFreight, orderList);
@@ -114,6 +122,7 @@ public with sharing class OrderItemHelper {
     }
 
     public static List<OrderItem> findFreight(List<OrderItem> orderItemList, List<Order> orderList){
+
         Map<Id, Freight__c> FreightMapList = new Map<Id, Freight__c>([
             SELECT Id, ProductHierarchy__c, Product__c, DistributionCenter__c, City__c, State__c, Country__c, Status__c, Value__c
             FROM Freight__c
@@ -150,8 +159,7 @@ public with sharing class OrderItemHelper {
                                 score = score + 100;
                             }
             
-                            if(score > oldScore || oldScore == 0){
-            
+                            if(score > oldScore || oldScore == 0){            
                                 if(score <= 100){
                                     freightValue = iFreight.Value__c;
                                 } else if(score >= 200 && score < 300){
@@ -224,8 +232,7 @@ public with sharing class OrderItemHelper {
                                 score = score + 100;
                             }
             
-                            if(score > oldScore){
-            
+                            if(score > oldScore){            
                                 if(score != 0 && score <= 100){
                                     marginValue = iMargin.Value__c;
                                 } else if(score >= 200 && score < 300){
@@ -257,6 +264,7 @@ public with sharing class OrderItemHelper {
     }
 
     public static void checkQuantityPriceFields(List<OrderItem> orderItemList){
+
         List<Order> orderList = new List<Order>([
             SELECT Id, AccountId, Status
             FROM Order
@@ -273,29 +281,23 @@ public with sharing class OrderItemHelper {
         }
     }
 
-    public static List<OrderItem> checkActivatedOrder(List<OrderItem> orderItemList, List<Order> newOrderList){
+    public static List<OrderItem> checkActivatedOrder(List<OrderItem> orderItemList, List<Order> orderList){
 
         List<OrderItem> orderItemListActivated = new List<OrderItem>();
 
-        List<Order> oldOrderList = new List<Order>([
-            SELECT Id, AccountId, Status
-            FROM Order
-        ]);
-
-        for(Order iOldOrder : oldOrderList){
-            for(Order iNewOrder : newOrderList){        
-                for(OrderItem iOrderItem : orderItemList){
-                    if(iNewOrder.Status == 'Draft' && iOldOrder.Status == 'Activated'){
-                        orderItemListActivated.add(iOrderItem);
-                    }
-                }    
-            }
+        for(Order iOrder : orderList){      
+            for(OrderItem iOrderItem : orderItemList){
+                if(iOrder.Status == 'Activated'){
+                    orderItemListActivated.add(iOrderItem);
+                }
+            }    
         }
 
         return orderItemListActivated;
     }
 
     public static List<OrderItem> queryAllFieldsForTriggerNew(List<OrderItem> orderItemList){
+
         Set<Id> orderIdSet = new Set<Id>();
         Set<Id> product2SetId = new Set<Id>();
         

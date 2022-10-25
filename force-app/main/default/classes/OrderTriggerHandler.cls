@@ -2,7 +2,7 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-24-2022
+ * @last modified on  : 10-25-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 
@@ -20,11 +20,7 @@ public with sharing class OrderTriggerHandler {
     }
 
     public void beforeUpdate(){
-        if(checkRecursion.runOnce()){
-            OrderHelper.checkAccountOrder(this.newRecords);
-            List<OrderItem> orderItemList = OrderHelper.checkOrderFields(this.newRecords, this.oldRecords);
-            OrderHelper.verifyEmptyFields(orderItemList, this.newRecords);
-        }
+        OrderHelper.checkOrderFields(this.newRecords, this.oldRecords);
     }
 
     public void afterUpdate(){

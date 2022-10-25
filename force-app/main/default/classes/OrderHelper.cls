@@ -2,13 +2,13 @@
  * @description       : 
  * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
  * @group             : 
- * @last modified on  : 10-24-2022
+ * @last modified on  : 10-25-2022
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public with sharing class OrderHelper {
     public OrderHelper() {}
 
-    public static void checkAccountAndFieldsOrder(List<Order> newOrderList){
+    public static Boolean checkAccountAndFieldsOrder(List<Order> newOrderList){
         List<Order> oldOrderList = new List<Order>([
             SELECT Id, AccountId, Status
             FROM Order
@@ -17,19 +17,33 @@ public with sharing class OrderHelper {
         for(Order iNewOrder : newOrderList){
             for(Order iOldOrder : oldOrderList){
                 if(iNewOrder.Id == iOldOrder.Id){
-                    if(iNewOrder.Status == 'Activated' && iOldOrder.Status == 'Activated'){
-                        iNewOrder.addError(Label.NoAllowChangeOrderFields);
+                    if(iOldOrder.Status == 'Activated' || iNewOrder.Status != 'Activated'){
+                        return false;
                     } else if(iNewOrder.AccountId != iOldOrder.AccountId){
-                        iNewOrder.addError(Label.NoAllowChangeOrderAccount);
+                        return false;
                     }    
                 }
             }
         }
+
+        return true;
     }
 
     public static List<OrderItem> checkOrderFields(List<Order> newOrderList, List<Order> oldOrderList){
 
-        checkAccountAndFieldsOrder(newOrderList);
+        Boolean canChangeOrderValues = checkAccountAndFieldsOrder(newOrderList);
+
+        if(checkRecursion.runOnce()){
+            for(Order iNewOrder : newOrderList){
+                for(Order iOldOrder : oldOrderList){        
+                    if(canChangeOrderValues == false && (iOldOrder.Status == 'Activated' && iNewOrder.Status != 'Activated')){
+                        iNewOrder.addError(Label.NoAllowChangeOrderFields);
+                    } else if(iNewOrder.AccountId != iOldOrder.AccountId){
+                        iNewOrder.addError(Label.NoAllowChangeOrderAccount);
+                    }
+                }
+            }
+        }
 
         Map<Id, Order> oldOrderMap = buildMapFromTriggerOld(oldOrderList);
 
@@ -42,10 +56,8 @@ public with sharing class OrderHelper {
         
         for(Order iNewOrder : newOrderMap.values()){
             for(Order iOldOrder : oldOrderMap.values()){
-                if(iNewOrder.Id == iOldOrder.Id){
-                    if(iOldOrder.Account.AccountGroup__c != iNewOrder.Account.AccountGroup__c || iOldOrder.Account.Name != iNewOrder.Account.Name || iOldOrder.AccountAddress__c != iNewOrder.AccountAddress__c || iOldOrder.AccountAddress__r.City__c != iNewOrder.AccountAddress__r.City__c || iOldOrder.AccountAddress__r.City__r.State__c != iNewOrder.AccountAddress__r.City__r.State__c || iOldOrder.AccountAddress__r.City__r.State__r.Country__c != iNewOrder.AccountAddress__r.City__r.State__r.Country__c || iOldOrder.DistributionCenter__c != iNewOrder.DistributionCenter__c){
-                        newOrderBuildMap.put(iNewOrder.Id, iNewOrder);
-                    }
+                if((iOldOrder.Account.AccountGroup__c != iNewOrder.Account.AccountGroup__c || iOldOrder.Account.Name != iNewOrder.Account.Name || iOldOrder.AccountAddress__c != iNewOrder.AccountAddress__c || iOldOrder.AccountAddress__r.City__c != iNewOrder.AccountAddress__r.City__c || iOldOrder.AccountAddress__r.City__r.State__c != iNewOrder.AccountAddress__r.City__r.State__c || iOldOrder.AccountAddress__r.City__r.State__r.Country__c != iNewOrder.AccountAddress__r.City__r.State__r.Country__c || iOldOrder.DistributionCenter__c != iNewOrder.DistributionCenter__c) && (iNewOrder.Id == iOldOrder.Id)){
+                    newOrderBuildMap.put(iNewOrder.Id, iNewOrder);
                 }
             }
         }
