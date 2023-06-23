@@ -5,7 +5,7 @@
 public with sharing class AccountHelper {
     public AccountHelper() {}
 
-    public static void CPNJValidate(List<Account> accountList){
+    public static void CNPJValidate(List<Account> accountList){
         List<Account> accountCNPJList = new List<Account>();
         List<Account> oldAccountCNPJList = new List<Account>([
             SELECT Id, CNPJ__c
@@ -33,7 +33,7 @@ public with sharing class AccountHelper {
             
             if (iAccountCNPJ.CNPJ__c != regexCNPJ){
                 iAccountCNPJ.addError('Insira o CNPJ com 14 dígitos e no seguinte formato: 99.999.999/9999-99');
-            } else if (!CPNJValEngine(numbersOnlyCNPJ)){
+            } else if (!CNPJValEngine(numbersOnlyCNPJ)){
                 iAccountCNPJ.addError(Label.CNPJValidate);
             }
 
@@ -45,7 +45,7 @@ public with sharing class AccountHelper {
         }
     }
 
-    public static Boolean CPNJValEngine(String CNPJ){
+    public static Boolean CNPJValEngine(String CNPJ){
 
         Boolean testeBoolean = true;
         
